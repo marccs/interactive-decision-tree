@@ -42,6 +42,7 @@ class DecisionTree{
 				$thisBranch->content = (string)$branch->content;
 				foreach( $branch->fork as $fork ){
 					$thisBranch->forks[(string)$fork['target']] = (string)$fork;
+					$thisBranch->forksImages[(string)$fork['target']] = (string)$fork['image'];									
 				}
 				array_push( $this->branches, $thisBranch );
 			}
@@ -64,6 +65,7 @@ class DecisionTree{
 				$thisBranch->content = stripslashes( htmlspecialchars_decode( (string)$branch->content ) );
 				foreach( $branch->fork as $fork ){
 					$thisBranch->forks[(string)$fork['target']] = (string)$fork;
+					$thisBranch->forksImages[(string)$fork['target']] = (string)$fork['image'];
 				}
 				array_push( $this->branches, $thisBranch );
 			}
@@ -134,7 +136,13 @@ class DecisionTree{
 			foreach( $branch->forks as $forkTarget => $forkLabel ){
 				$forkXML = $branchXML->addChild( 'fork', $forkLabel );
 				$forkXML->addAttribute( 'target', $forkTarget );
-			}			
+
+				foreach( $branch->forksImages as $key => $value ){
+					if ($key == $forkTarget) {
+						$forkXML->addAttribute( 'image', $value );
+					}
+				}
+			}
 		}
 		if( file_exists( $this->xmlDirPath . $this->treeID ) ){
 			$destPath = $this->xmlDirPath . str_replace( '.xml', '.xml.' . time(), $this->treeID );
@@ -204,6 +212,7 @@ class Branch{
 	var $ID;
 	var $content;
 	var $forks = array();
+	var $forksImages = array();
 	
 	function __construct(){
 	

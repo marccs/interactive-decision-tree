@@ -1,6 +1,6 @@
 var treeData;
-$(document).ready( function(){
-	
+$(document).ready( function() {
+
 	windowWidth = $('#tree-window').outerWidth( false );
 	sliderWidth = 0;
 	slideTime = 300;
@@ -43,6 +43,7 @@ function TreeBranch(){
 	this.id = '';
 	this.content = '';
 	this.forkIDs = new Array();
+	this.forkImages = new Array();
 	this.forkLabels = new Array();
 }
 
@@ -61,6 +62,7 @@ function buildNodes( xmlData ){
 			$(this).find('fork').each(
 				function(){
 					branch.forkIDs.push( $(this).attr('target') );
+					branch.forkImages.push( $(this).attr('image') );
 					branch.forkLabels.push( $(this).text() );
 				}
 			);
@@ -108,9 +110,15 @@ function showBranch( id ){
 		if( forkContent.indexOf('http://') == 0 || forkContent.indexOf('https://') == 0 ){
 			link = 'href="' + forkContent + '"'
 		}
-		decisionLinksHTML += '<a ' + link + ' id="' + currentBranch.forkIDs[d] + '">' + currentBranch.forkLabels[d] + '</a>';
+		
+		if (currentBranch.forkImages[d] != "") {			
+			decisionLinksHTML += '<a ' + link + ' id="' + currentBranch.forkIDs[d] + '">' + currentBranch.forkLabels[d] + ' <img src="images/'+currentBranch.forkImages[d] + '" ></a>';
+		} else {
+			decisionLinksHTML += '<a ' + link + ' id="' + currentBranch.forkIDs[d] + '">' + currentBranch.forkLabels[d] + '</a>';
+		}
 	}
 	decisionLinksHTML += '</div>';
+
 	var branchHTML = '<div id="branch-' + currentBranch.id + '" class="tree-content-box"><div class="content">' + currentBranch.content + '</div>' + decisionLinksHTML;
 	if( currentBranch.id != 1 ){
 		branchHTML += '<a class="back-link">&laquo; Back</a>';

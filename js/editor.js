@@ -37,9 +37,10 @@ $(document).ready( function(){
 			var nextFork = 1;
 		}
 		var forkID = branchID + '.' + nextFork;
-		var newForkHTML = '<span><input class="fork" type="text" id="fork-' + forkID + '" name="fork-' + forkID + '" /> <a href="#" class="btnRemoveFork">&laquo; Remove</a><br /></span>';
+		
+		var newForkHTML = '<span><input class="fork" type="text" id="fork-' + forkID + '" name="fork-' + forkID + '" /> <label for="file">Image:</label> <input type="file" name="file" id="forkfile-' + forkID + '"> <a href="#" class="btnRemoveFork">&laquo; Remove</a><br /></span>';
 		$('p#forks').append( newForkHTML );
-//		alert( forkID );
+
 	});
 	
 	$('.btnRemoveFork').live( 'click',function(){

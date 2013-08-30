@@ -134,7 +134,13 @@ function showBranchForm( $tree, $branchID ){
 		$branch->forks[$branchID . '.2'] = 'No';
 	}
 	?>
-	<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>" id="branch-editor">
+	<script>
+	function changeforkfile(obj, forkID) {
+		document.getElementById("forkfiletxt-"+forkID).value = obj.value;
+	}
+	</script>
+	<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>" id="branch-editor" enctype="multipart/form-data" >
+	<input type="hidden" name="MAX_FILE_SIZE" value="2000000" />
   <p><label for="content">Question/Decision Text:</label><br />
   	<textarea id="content" name="branchContent"><?php echo $branch->content; ?></textarea>
 		<div class="note">Enter a URL above to route users there instead of displaying text (e.g. http://hungry-media.com)</div></p>
@@ -142,7 +148,9 @@ function showBranchForm( $tree, $branchID ){
   <?php
 	foreach( $branch->forks as $forkID => $forkLabel ){
 	?>
-    <span><input class="fork" type="text" id="fork-<?php echo $forkID; ?>" name="fork-<?php echo $forkID; ?>" value="<?php echo $forkLabel; ?>" /> <a href="#" class="btnRemoveFork">&laquo; Remove</a><br /></span>
+    <span><input class="fork" type="text" id="fork-<?php echo $forkID; ?>" name="fork-<?php echo $forkID; ?>" value="<?php echo $forkLabel; ?>" /> 
+	<?php foreach( $branch->forksImages as $key => $value ){ if ($key == $forkID) {?> Image:&nbsp;<input type="text" id="forkfiletxt-<?php echo $forkID; ?>" name="forkfiletxt-<?php echo $forkID; ?>" value="<?php echo $value; ?>" readonly="true"> &nbsp;<input type="file" id="forkfile-<?php echo $forkID; ?>" name="forkfile-<?php echo $forkID; ?>" onchange="changeforkfile(this, '<?php echo $forkID; ?>');" > <?php } } ?>	
+	<a href="#" class="btnRemoveFork">&laquo; Remove</a><br /></span>
   <?php
 	}
 	?></p>
@@ -184,7 +192,71 @@ function saveBranch( $tree ){
 			}
 			unset( $forkBranch );
 		}
+		
+		if( substr( $formField, 0, 12 ) == 'forkfiletxt-' ) {
+		
+			// get forkID from field name
+			$fieldParts = split( '-', $formField );
+			$forkID = str_replace( '_', '.', $fieldParts[1]);
+			array_push( $passedForks, $forkID );
+			//$branch->forks[$forkID] = $formValue;
+			$branch->forksImages[$forkID] = $formValue;
+			$forkBranch = $tree->getBranch( $forkID );
+			
+			$forkBranch = $tree->getBranch( $forkID );
+			if( empty( $forkBranch ) ){
+				$forkBranch = new Branch();
+				$forkBranch->ID = $forkID;				
+				$tree->saveBranch( $forkBranch );
+			}
+			unset( $forkBranch );
+
+		}
+		
 	}
+	
+	foreach( $_FILES as $formField => $formValue ) {
+	
+		if( substr( $formField, 0, 9 ) == 'forkfile-' ) {
+
+			// save file to filesystem
+
+			$allowedExts = array("gif", "jpeg", "jpg", "png");
+			$temp = explode(".", $_FILES[$formField]["name"]);
+			$extension = end($temp);
+
+			if ((($_FILES[$formField]["type"] == "image/gif")
+				|| ($_FILES[$formField]["type"] == "image/jpeg")
+				|| ($_FILES[$formField]["type"] == "image/jpg")
+				|| ($_FILES[$formField]["type"] == "image/pjpeg")
+				|| ($_FILES[$formField]["type"] == "image/x-png")
+				|| ($_FILES[$formField]["type"] == "image/png"))
+				&& ($_FILES[$formField]["size"] < 2000000)
+				&& in_array($extension, $allowedExts)) {
+				
+					if ($_FILES[$formField]["error"] > 0) {
+						echo "Return Code: " . $_FILES[$formField]["error"] . "<br>";
+					} else {
+						echo "Upload: " . $_FILES[$formField]["name"] . "<br>";
+						echo "Type: " . $_FILES[$formField]["type"] . "<br>";
+						echo "Size: " . ($_FILES[$formField]["size"] / 1024) . " kB<br>";
+						echo "Temp file: " . $_FILES[$formField]["tmp_name"] . "<br>";
+
+						if (file_exists("images/" . $_FILES[$formField]["name"])) {
+							echo $_FILES[$formField]["name"] . " already exists. " . "<br>";
+						} else {
+							move_uploaded_file($_FILES[$formField]["tmp_name"], "images/" . $_FILES[$formField]["name"]);
+							echo "Stored in: " . "images/" . $_FILES[$formField]["name"] . "<br>";
+						}
+					}
+			} else {
+				echo "Invalid file" . "<br>"; 
+			}
+
+		}
+	
+	}
+
 	// remove any forks from the branch that weren't passed
 	foreach( $branch->forks as $forkID => $forkLabel ){
 		if( !in_array( $forkID, $passedForks ) ){
